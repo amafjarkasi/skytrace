@@ -15,8 +15,9 @@ powered by [Roboflow Supervision](https://supervision.roboflow.com/) · local In
 </div>
 
 <p align="center">
-  <img src="docs/assets/undershot_a380.gif" alt="Under-shot A380 tracking" width="48%" />
-  <img src="docs/assets/overhead_apron.gif" alt="Overhead apron tracking" width="48%" />
+  <img src="docs/assets/undershot_a380.gif" alt="Under-shot A380 tracking" width="32%" />
+  <img src="docs/assets/overhead_apron.gif" alt="Overhead apron tracking" width="32%" />
+  <img src="docs/assets/demo_drone_quad.gif" alt="Drone quadcopter tracking" width="32%" />
 </p>
 
 ---
@@ -77,8 +78,8 @@ flowchart LR
 | --- | --- |
 | `airborne` | General airborne / under-shot spotting |
 | `overhead_plane` | Apron / top-down planes |
-| `drone` | Drone OD v2 ([Universe](https://universe.roboflow.com/yolodrone/drone-object-detection-v2/model/1)) |
-| `drone_yolo11` | Newer YOLOv11 drone detector |
+| `drone` / `drone_yolo11` | Drone detector (YOLOv11; preferred for demos) |
+| `drone_v2` | Earlier drone OD v2 Universe model |
 | `drone_large` | Large public drone dataset model |
 | `tello` | Tello-oriented drone detector |
 
@@ -98,7 +99,7 @@ python -m skytrace.cli status
 
 .\scripts\run_local.ps1 -Source data\videos\undershot_a380_yyz.webm -MaxFrames 120 -Model airborne
 .\scripts\run_local.ps1 -Source data\videos\overhead_apron_montage.mp4 -Model overhead_plane -MaxFrames 0 -Zones
-.\scripts\run_local.ps1 -Source data\videos\drone_quadcopter_hover.webm -Model drone -MaxFrames 0
+.\scripts\run_local.ps1 -Source data\videos\drone_quadcopter_hover.webm -Model drone_yolo11 -MaxFrames 0
 
 python app.py
 ```

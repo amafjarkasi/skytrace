@@ -28,11 +28,13 @@ def test_normalize_rejects_bad():
 def test_drone_model_aliases_present():
     assert "drone" in ROBOFLOW_MODELS
     assert "drone_yolo11" in ROBOFLOW_MODELS
-    assert ROBOFLOW_MODELS["drone"].endswith("/1")
+    assert "drone_v2" in ROBOFLOW_MODELS
+    assert ROBOFLOW_MODELS["drone"] == ROBOFLOW_MODELS["drone_yolo11"]
+    assert ROBOFLOW_MODELS["drone"].endswith("/2")
 
 
 def test_normalize_drone_model():
     assert (
         normalize_detect_path(ROBOFLOW_MODELS["drone"])
-        == "drone-object-detection-v2/1"
+        == "drone-detection-dvhol/2"
     )

@@ -78,6 +78,8 @@ GALLERY = [
     ("demo_undershot_a380_local.mp4", "undershot_a380.gif", "undershot_a380.png"),
     ("demo_overhead_local.mp4", "overhead_apron.gif", "overhead_apron.png"),
     ("undershot_tejas_tracked.mp4", "undershot_tejas.gif", "undershot_tejas.png"),
+    ("demo_drone_quad.mp4", "demo_drone_quad.gif", "demo_drone_quad.png"),
+    ("demo_a380_zones.mp4", "demo_a380_zones.gif", "demo_a380_zones.png"),
 ]
 
 

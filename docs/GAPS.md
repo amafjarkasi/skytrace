@@ -14,40 +14,54 @@ SkyTrace intentionally stops at Supervision-style EO tracking + public samples. 
 
 ## Capability gaps
 
-| Gap | Why it matters | Possible next step |
-| --- | --- | --- |
-| **No ADS-B / Mode-S fusion** | Visual tracks lack callsign, altitude, ICAO address | Correlate track centroids with OpenSky / ADS-B feeds by time+geo |
-| **No multi-camera re-ID** | Same aircraft across cameras gets new IDs | Appearance embeddings + spatial handoff |
-| **Tiny / distant targets** | High-altitude spotting can be a few pixels | SAHI / tiled inference, higher-res models, lower conf + NMS tuning |
-| **View-specific models** | Under-shot ≠ overhead ≠ satellite | Auto-select alias by source metadata or UI preset |
-| **Not safety-certified** | Cannot replace ATC / certified surveillance | Keep disclaimer; no “operational use” claims |
-| **Cloud cost footgun** | `roboflow` backend bills per frame | Keep `local` default; warn in UI when cloud selected |
 
-## Recently closed (demo scope)
+| Gap                                | Why it matters                                               | Possible next step                                                 |
+| ---------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------ |
+| **No ADS-B / Mode-S fusion**       | Visual tracks lack callsign, altitude, ICAO address          | Correlate track centroids with OpenSky / ADS-B feeds by time+geo   |
+| **No multi-camera re-ID**          | Same aircraft across cameras gets new IDs                    | Appearance embeddings + spatial handoff                            |
+| **Tiny / distant targets**         | High-altitude spotting can be a few pixels                   | SAHI / tiled inference, higher-res models, lower conf + NMS tuning |
+| **Weak drone coverage in samples** | Bundled clips are mostly airliners                           | Add dedicated drone Commons / Universe drone models                |
+| **View-specific models**           | Under-shot ≠ overhead ≠ satellite                            | Auto-select alias by source metadata or UI preset                  |
+| **No zone analytics**              | Runway occupancy / apron counts are common Supervision demos | `PolygonZone` + line crossing counts                               |
+| **No live RTSP recipe**            | Ops care about streams, not files                            | Document webcam/RTSP → `process_video` loop                        |
+| **Not safety-certified**           | Cannot replace ATC / certified surveillance                  | Keep disclaimer; no “operational use” claims                       |
+| **Cloud cost footgun**             | `roboflow` backend bills per frame                           | Keep `local` default; warn in UI when cloud selected               |
 
-- Drone-focused Commons samples + Universe model aliases (`drone`, `drone_yolo11`, `tello`, …)
-- `PolygonZone` + `LineZone` showcase (`--zones`)
-- Package rename to `skytrace`
-- CI (pytest) + README gallery assets
 
-## Supervision features still optional
 
+
+## Supervision features not yet showcased
+
+- `PolygonZone` / `LineZone` for apron or runway counting  
 - Heatmaps / speed estimates from tracks  
 - Dataset export (`DetectionDataset`) for fine-tuning  
-- SAM-based refinement (optional; currently disabled to reduce noise)  
-- Live RTSP / webcam recipe polish  
+- SAM-based refinement (optional; currently disabled to reduce noise)
 
-## Sample / data notes
+
+
+## Sample / data gaps
 
 - Long spotting videos are large; demos often use `--max-frames`  
 - Overhead path uses a **still montage**, not true continuous aerial video  
-- Licenses vary (CC BY / CC BY-SA / GODL) — commercial redistribution of media needs care  
+- Licenses vary (CC BY / CC BY-SA / GODL) — commercial redistribution of media needs care
+
+
+
+## Engineering polish still useful
+
+- Pin / upgrade `inference` to silence version warnings  
+- Optional GPU acceleration notes (CUDA providers)  
+- CI: lint + pytest on normalize / path helpers  
+- Screenshot / GIF gallery in README (from `data/outputs/`)  
+- Rename internal package `airtrack` → `skytrace` for full brand alignment
+
+
 
 ## What already works well
 
-- Local Inference on under-shot + overhead + drone samples with ByteTrack IDs  
+- Local Inference on under-shot + overhead samples with stable ByteTrack IDs  
 - Cost-aware backend table and `.venv312` path  
 - Public-sample fetch (no user data required)  
-- Events JSON + zone counters for downstream analysis  
+- Events JSON for downstream analysis
 
 This list is intentional scope control — not a claim that airborne CV is “solved.”

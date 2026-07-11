@@ -52,8 +52,10 @@ ROBOFLOW_MODELS = {
     "airborne": "airborne-object-detection/airborne-object-detection-4-aod4/6",
     "overhead_plane": "skybot-cam/overhead-plane-detector/3",
     # Drone / UAV (verified trained models on Roboflow Universe)
-    "drone": "yolodrone/drone-object-detection-v2/1",
+    # Prefer drone_yolo11 weights (verified non-zero tracks on hover clip)
+    "drone": "godworkspace/drone-detection-dvhol/2",
     "drone_yolo11": "godworkspace/drone-detection-dvhol/2",
+    "drone_v2": "yolodrone/drone-object-detection-v2/1",
     "drone_large": "drone-detection-snemv/drone-detection-wpccn/1",
     "tello": "alexander437-gzzhf/tello_detect/1",
 }
