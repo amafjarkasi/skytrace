@@ -1,0 +1,15 @@
+# Local inference stack (Python 3.10–3.12). Prefer this to avoid cloud detect fees.
+supervision>=0.26.0
+ultralytics>=8.3.0
+opencv-python-headless>=4.8.0,<4.11
+numpy>=1.24.0,<2.5
+gradio>=4.44.0
+requests>=2.31.0
+tqdm>=4.66.0
+pillow>=10.0.0
+python-dotenv>=1.0.0
+roboflow>=1.1.0
+inference>=0.36.0
+trackers>=2.0.0
+ftfy>=6.1.0
+regex>=2023.0.0
