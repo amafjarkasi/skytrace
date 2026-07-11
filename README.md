@@ -5,7 +5,7 @@
 **Airborne object detection & multi-object tracking**  
 powered by [Roboflow Supervision](https://supervision.roboflow.com/) · local Inference · YOLO-World
 
-[![CI](https://img.shields.io/github/actions/workflow/status/PLACEHOLDER/skytrace/ci.yml?style=for-the-badge&label=CI)](.github/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/amafjarkasi/skytrace/ci.yml?style=for-the-badge&label=CI)](.github/workflows/ci.yml)
 [![Python 3.10–3.12](https://img.shields.io/badge/python-3.10%E2%80%933.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Supervision](https://img.shields.io/badge/Supervision-ByteTrack-FF6B35?style=for-the-badge)](https://supervision.roboflow.com/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-0B3D2E?style=for-the-badge)](LICENSE)
