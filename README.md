@@ -5,7 +5,8 @@
 <h1 align="center">SkyTrace</h1>
 
 <p align="center">
-  <b>Multi-object airborne tracking</b> for dense airplane traffic, hard-to-track jets, and drone activity
+  <b>Multi-object airborne tracking</b> for dense airplane traffic, hard-to-track jets, and drone activity<br/>
+  <sub>Persistent IDs · motion trails · local Inference · zero private sample data required</sub>
 </p>
 
 <p align="center">
@@ -26,6 +27,7 @@
 </p>
 
 <p align="center">
+  <a href="#-overview">Overview</a> ·
   <a href="#-mission">Mission</a> ·
   <a href="#-features">Features</a> ·
   <a href="#-gallery">Gallery</a> ·
@@ -38,6 +40,31 @@
   <a href="#-troubleshooting">Troubleshooting</a> ·
   <a href="#-documentation">Docs</a>
 </p>
+
+---
+
+## 🌐 Overview
+
+**SkyTrace** turns raw airside video into **persistent tracks** — not one-off detections. Every frame can contain several airplanes on an apron, a small UAV against bright sky, or a fast jet that only occupies a few pixels for a moment. SkyTrace runs a detector, associates boxes across time with **ByteTrack**, draws motion trails, and writes an annotated video plus a structured event log you can analyze later.
+
+That one-line pitch — *multi-object airborne tracking for dense airplane traffic, hard-to-track jets, and drone activity* — maps to three real failure modes this repo is built to demonstrate:
+
+| Challenge | What breaks naive demos | How SkyTrace approaches it |
+| --- | --- | --- |
+| **Dense airplane traffic** | Multiple overlapping airframes, parked + taxiing in one FOV | View-tuned models (`overhead_plane`, `airborne`) + multi-ID ByteTrack + trails |
+| **Hard-to-track jets** | Speed, blur, abrupt scale change → ID switches | Aerial-friendly tracker thresholds and per-frame event export to audit gaps |
+| **Drone activity** | Tiny / low-contrast targets that disappear between frames | Dedicated Universe drone aliases (`drone`, `tello`, …) and open-vocab YOLO-World fallback |
+
+**What you run locally**
+
+1. **Fetch** CC-licensed Wikimedia samples (under-shot spotting, overhead aprons, videos *of* drones — no private footage required).
+2. **Detect** with local Roboflow Inference after a one-time weight download (or YOLO-World / COCO offline).
+3. **Track & annotate** with Supervision (boxes, labels, traces, optional `PolygonZone` / `LineZone`).
+4. **Export** `data/outputs/*_tracked.mp4` + `*.events.json` (`track_id`, class, confidence, `xyxy`, zone flags).
+
+**Stack at a glance:** [Supervision](https://supervision.roboflow.com/) · [Roboflow Inference](https://inference.roboflow.com/) · Ultralytics YOLO-World · Gradio UI · MIT code + Commons samples ([`NOTICE.md`](NOTICE.md)).
+
+> Prefer **`--backend local`** for long clips. Cloud HTTP (`roboflow`) bills **per frame** and is only for short checks.
 
 ---
 
