@@ -1,32 +1,47 @@
 <p align="center">
-  <img src="docs/assets/skytrace-logo-256.png" alt="SkyTrace logo" width="160" />
+  <img src="docs/assets/skytrace-logo.png" alt="SkyTrace logo" width="200" />
 </p>
 
 <h1 align="center">SkyTrace</h1>
 
 <p align="center">
-  <strong>Multi-object airborne tracking</strong> for dense traffic, fast jets, and drone activity<br/>
-  Built on <a href="https://supervision.roboflow.com/">Roboflow Supervision</a> · local Inference · ByteTrack · optional airspace zones
+  <b>Multi-object airborne tracking</b> for dense airplane traffic, hard-to-track jets, and drone activity
 </p>
 
 <p align="center">
-  <a href="https://github.com/amafjarkasi/skytrace/actions"><img src="https://img.shields.io/github/actions/workflow/status/amafjarkasi/skytrace/ci.yml?style=for-the-badge&label=CI&logo=github" alt="CI" /></a>
-  <img src="https://img.shields.io/badge/python-3.10%E2%80%933.12-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
-  <img src="https://img.shields.io/badge/tracking-ByteTrack-FF6B35?style=for-the-badge" alt="ByteTrack" />
-  <img src="https://img.shields.io/badge/license-MIT-0B3D2E?style=for-the-badge" alt="MIT" />
-  <img src="https://img.shields.io/badge/demo-zero%20sample%20data-1B7F5A?style=for-the-badge" alt="Zero samples" />
+  Detect → <b>ByteTrack</b> → annotate → export<br/>
+  <a href="https://supervision.roboflow.com/">Roboflow Supervision</a>
+  · local <a href="https://inference.roboflow.com/">Inference</a>
+  · YOLO-World
+  · optional airspace zones
+</p>
+
+<p align="center">
+  <a href="https://github.com/amafjarkasi/skytrace/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/amafjarkasi/skytrace/ci.yml?style=for-the-badge&label=CI&logo=githubactions&logoColor=white" alt="CI" /></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.10%E2%80%933.12-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" /></a>
+  <a href="https://supervision.roboflow.com/"><img src="https://img.shields.io/badge/Supervision-ByteTrack%20%2B%20Zones-FF6B35?style=for-the-badge" alt="Supervision" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-0B3D2E?style=for-the-badge" alt="MIT" /></a>
+  <img src="https://img.shields.io/badge/samples-CC%20Commons-1B7F5A?style=for-the-badge" alt="CC samples" />
+  <img src="https://img.shields.io/badge/cost-local%20first-0E4D6C?style=for-the-badge" alt="Local first" />
 </p>
 
 <p align="center">
   <a href="#-mission">Mission</a> ·
-  <a href="#-why-this-is-hard">Why hard</a> ·
+  <a href="#-features">Features</a> ·
+  <a href="#-gallery">Gallery</a> ·
   <a href="#-how-it-works">How it works</a> ·
   <a href="#-quick-start">Quick start</a> ·
+  <a href="#-sample-catalog">Samples</a> ·
   <a href="#-models--backends">Models</a> ·
+  <a href="#-cli-reference">CLI</a> ·
+  <a href="#-configuration">Config</a> ·
+  <a href="#-troubleshooting">Troubleshooting</a> ·
   <a href="#-documentation">Docs</a>
 </p>
 
 ---
+
+<a id="-gallery"></a>
 
 <p align="center">
   <img src="docs/assets/multi_overhead.gif" alt="Multi-aircraft overhead apron tracking" width="32%" />
@@ -34,63 +49,101 @@
   <img src="docs/assets/multi_traffic.gif" alt="Spotting traffic multi-class detections" width="32%" />
 </p>
 
-<p align="center"><sub>
-  Left → right: <b>multi-plane apron</b> · <b>drone tracks</b> · <b>spotting traffic</b> (multi-class hits).<br/>
-  Not a single close-up airliner hero shot — the point is <b>many objects, hard geometry, persistent IDs</b>.
-</sub></p>
+<p align="center">
+  <sub>
+    <b>Multi-plane apron</b> · <b>drone tracks</b> · <b>spotting traffic</b><br/>
+    Persistent IDs across crowded frames — not a single close-up airliner screenshot.
+  </sub>
+</p>
 
 ---
 
 ## 🎯 Mission
 
-**SkyTrace** is a Supervision-powered demo for **tracking many things in the sky at once**:
+**SkyTrace** is an open demo of [Roboflow Supervision](https://supervision.roboflow.com/) applied to **aerial multi-object tracking (MOT)**.
 
-| Challenge | What SkyTrace targets |
-| --- | --- |
-| 🛫 **Heavy airplane traffic** | Apron / spotting scenes with multiple airframes sharing the frame |
-| 🛸 **Drone activity** | Small, fast, low-contrast UAVs (quads, VTOL, operational drones) |
-| ⚡ **Hard-to-track jets** | Fast motion, scale jumps, brief occlusions — keep an ID across frames |
-| 🛰️ **Mixed airspace** | Planes + drones + helicopters + birds in one open-vocab or multi-model pipeline |
+The goal is not “find one airplane.” The goal is to keep **many airborne objects** identified as they move:
 
-It is **not** “draw one box on a big A380.” The product story is **multi-object tracking (MOT)** under aerial stress: crowded frames, tiny targets, and unstable viewpoints.
+| Scenario | Why it matters | What SkyTrace emphasizes |
+| --- | --- | --- |
+| 🛫 **Heavy airplane traffic** | Aprons & spotting ramps pack multiple airframes into one FOV | Multi-box association + trails |
+| 🛸 **Drone / swarm-like activity** | Small, fast, low-contrast UAVs break naive detectors | Dedicated Universe drone aliases + ByteTrack |
+| ⚡ **Hard-to-track jets** | Speed, scale jumps, brief occlusion → ID switches | Lower activation thresholds for sparse aerial dets |
+| 🛰️ **Mixed airspace** | Planes + helicopters + drones + birds in one clip | Open-vocab YOLO-World *or* view-specific models |
 
-### What you get out of the box
-
-- 🎞️ **Public CC samples** — under-shot, overhead montages, and *videos of drones* (no private footage required)
-- 🧠 **Detectors** — local Roboflow Inference (preferred), YOLO-World, COCO fallback, or cloud HTTP
-- 🆔 **ByteTrack** — stable track IDs + motion trails via Supervision annotators
-- 📐 **Optional zones** — `PolygonZone` corridor + `LineZone` crossing counters (`--zones`)
-- 📦 **Exports** — annotated MP4 + structured `*.events.json` for analytics
-- 🖥️ **Gradio UI** — fetch samples, pick model alias, run, preview
-
-> ⚠️ **Not ATC / not a surveillance product.** Research & demo software. Real airport UAS defense is multimodal (radar, RF, ADS-B, IR) — see [`docs/GAPS.md`](docs/GAPS.md).
+> ⚠️ **Not ATC and not a surveillance product.** Real airport / UAS defense stacks fuse radar, RF, ADS-B, and IR. SkyTrace is EO video MOT for research and demos. See [`docs/GAPS.md`](docs/GAPS.md).
 
 ---
 
-## 🔥 Why this is hard
+## ✨ Features
 
-Aerial MOT fails for boring engineering reasons that still break demos:
+<table>
+<tr>
+<td width="50%" valign="top">
 
-1. **Scale chaos** — a parked widebody and a distant UAV can share one frame at wildly different pixel sizes.
-2. **Motion blur & low contrast** — jets and drones against bright sky / cluttered apron.
-3. **ID switches** — without tracking, every frame is a new object; with weak association, “drone #3” becomes “drone #7.”
-4. **Viewpoint mismatch** — under-shot spotting ≠ nadir apron ≠ handheld drone footage → different Universe models.
-5. **Cost traps** — naive cloud detect on a 3‑minute spotting clip burns credits every frame.
+### Core pipeline
+- 🎬 Video ingest (bundled samples or your file)
+- 🧠 Detectors: **local Inference**, YOLO-World, COCO, cloud HTTP
+- 🆔 **ByteTrack** persistent IDs (`trackers` or `sv.ByteTrack`)
+- 🖍️ Box + label + **motion trail** annotators
+- 📐 Optional **PolygonZone** corridor + **LineZone** counters
+- 📦 Annotated **MP4** + structured **`*.events.json`**
 
-SkyTrace’s defaults push **on-device Inference after one weight download**, multi-object ByteTrack, and **view-specific model aliases** (`airborne`, `overhead_plane`, `drone`, …).
+</td>
+<td width="50%" valign="top">
+
+### Product experience
+- 📥 **Zero sample data** — `fetch` pulls CC Wikimedia clips
+- 🖥️ **Gradio UI** (`app.py`) for interactive runs
+- 💸 **Local-first cost model** — download weights once, infer on-device
+- 🧪 Unit-tested model path helpers + GitHub Actions CI
+- 🖼️ README gallery builder (`scripts/build_gallery.py`)
+- 📜 Clear attribution in [`NOTICE.md`](NOTICE.md)
+
+</td>
+</tr>
+</table>
+
+### Feature matrix
+
+| Capability | Status | Notes |
+| --- | --- | --- |
+| Multi-object tracking | ✅ | ByteTrack IDs + traces |
+| Airplane / apron models | ✅ | `airborne`, `overhead_plane` |
+| Drone models | ✅ | `drone`, `drone_v2`, `drone_large`, `tello` |
+| Open-vocab classes | ✅ | YOLO-World (`--backend world`) |
+| Zone analytics | ✅ | `--zones` |
+| Gradio demo | ✅ | `python app.py` |
+| Public sample fetch | ✅ | Planes + drones + overhead montage |
+| ADS-B / radar fusion | ❌ | Out of scope (documented gap) |
+| Multi-camera re-ID | ❌ | Out of scope |
 
 ---
 
-## 🧪 Live demo results (local Inference)
+## 🔥 Why aerial MOT is hard
 
-| Scenario | Alias | Tracks / hits (example run) | Why it matters |
+| Failure mode | What you see | SkyTrace response |
+| --- | --- | --- |
+| **Scale chaos** | Widebody + distant UAV in one frame | View-specific model aliases |
+| **Motion / blur** | Jets smear; drones flicker | Confidence tuning + tracker buffers |
+| **ID switches** | “Drone #3” becomes “#7” mid-clip | ByteTrack with aerial-friendly thresholds |
+| **Viewpoint mismatch** | Under-shot ≠ nadir ≠ handheld UAV | Separate Universe models per view |
+| **Cloud cost traps** | 3‑min spotting clip × per-frame API | Default **`local`** after weight download |
+
+---
+
+## 🧪 Verified local results
+
+Runs on **Python 3.12 + local Inference** (example numbers from demo passes):
+
+| Scenario | Model alias | Tracks / hits | Takeaway |
 | --- | --- | --- | --- |
-| 🛬 Overhead apron montage | `overhead_plane` | **2–3 plane tracks**, 100+ class hits | Dense multi-aircraft geometry |
-| 🛸 Quadcopter hover | `drone` | **2 tracks**, ~93 drone hits | Small UAV persistence |
-| 📡 RCTP spotting clip | `airborne` | Multi-class hits (airplane / heli / drone) | Busy spotting traffic |
-| ✈️ A380 + zones | `airborne` + `--zones` | Corridor occupancy counters | Zone analytics overlay |
+| Overhead apron montage | `overhead_plane` | **2–3** plane tracks, 100+ hits | Dense multi-aircraft geometry |
+| Quadcopter hover | `drone` | **2** tracks, ~93 drone hits | Small UAV persistence |
+| RCTP spotting clip | `airborne` | Multi-class airplane / heli / drone hits | Busy spotting traffic |
+| A380 + zones | `airborne` + `--zones` | Corridor occupancy counters | Zone overlay analytics |
 
-Rebuild GIFs anytime:
+Rebuild gallery assets from your outputs:
 
 ```powershell
 python scripts/build_gallery.py
@@ -102,23 +155,23 @@ python scripts/build_gallery.py
 
 ```mermaid
 flowchart TB
-  subgraph Ingest
-    V[Video / sample / upload]
+  subgraph Ingest["1 · Ingest"]
+    V["Video / Commons sample / upload"]
   end
-  subgraph Detect
-    B{Backend}
-    B -->|local ★| L[Roboflow Inference on-device]
-    B -->|world| W[YOLO-World open-vocab]
-    B -->|coco| C[YOLOv8n airplane]
-    B -->|roboflow| R[Cloud HTTP per frame]
+  subgraph Detect["2 · Detect"]
+    B{{Backend}}
+    B -->|"local ★"| L["Roboflow Inference<br/>on-device"]
+    B -->|world| W["YOLO-World<br/>open-vocab"]
+    B -->|coco| C["YOLOv8n<br/>airplane only"]
+    B -->|roboflow| R["Cloud HTTP<br/>credits / frame"]
   end
-  subgraph Associate
-    T[ByteTrack — persistent IDs]
-    Z[Optional PolygonZone + LineZone]
+  subgraph Track["3 · Associate"]
+    T["ByteTrack → track_id"]
+    Z["Optional PolygonZone + LineZone"]
   end
-  subgraph Output
-    A[Boxes · labels · trails · HUD]
-    E[MP4 + events.json]
+  subgraph Out["4 · Export"]
+    A["Boxes · labels · trails · HUD"]
+    E["MP4 + events.json"]
   end
   V --> B
   L --> T
@@ -128,80 +181,147 @@ flowchart TB
   T --> Z --> A --> E
 ```
 
-### Pipeline (detail)
+### Step-by-step
 
-| Step | Tech | Notes |
-| --- | --- | --- |
-| 1. Ingest | OpenCV / Supervision video sink | Bundled Commons clips or your file |
-| 2. Detect | Inference / Ultralytics / HTTP | Alias picks Universe project/version |
-| 3. Track | `trackers.ByteTrackTracker` or `sv.ByteTrack` | Tuned for **sparse aerial** dets |
-| 4. Zones | `sv.PolygonZone` + `sv.LineZone` | Corridor + crossing counts |
-| 5. Annotate | Box / Label / Trace + HUD | Track count, model id, zone stats |
-| 6. Export | MP4 + JSON | Per-detection `track_id`, `xyxy`, `in_zone` |
+| # | Stage | Implementation | Detail |
+| --- | --- | --- | --- |
+| 1 | **Ingest** | Supervision / OpenCV | `data/videos/*` or upload path |
+| 2 | **Detect** | `AirborneDetector` | Alias → Universe `project/version` (workspace stripped) |
+| 3 | **Track** | `ByteTrackTracker` preferred | Lower activation / IOU for sparse aerial dets |
+| 4 | **Zones** | `sv.PolygonZone` + `sv.LineZone` | Relative corridor + mid-frame count line |
+| 5 | **Annotate** | Box / Label / Trace + HUD | Live track count, model id, zone stats |
+| 6 | **Export** | `VideoSink` + JSON | Per-frame events for analytics |
 
-Events schema (abbrev.):
+### Events JSON (shape)
 
 ```json
 {
+  "source": "data/videos/overhead_apron_montage.mp4",
+  "model": "local:overhead-plane-detector/3",
+  "backend": "local",
+  "frames_processed": 90,
   "unique_tracks": 3,
-  "class_counts": {"planes": 216},
-  "zones": {"enabled": true, "zone_detection_hits": 126, "line_in": 0, "line_out": 0},
+  "class_counts": { "planes": 216 },
+  "zones": {
+    "enabled": true,
+    "zone_detection_hits": 126,
+    "line_in": 0,
+    "line_out": 0
+  },
   "events": [
-    {"frame": 42, "track_id": 2, "class": "planes", "confidence": 0.81, "xyxy": [..], "in_zone": true}
+    {
+      "frame": 42,
+      "track_id": 2,
+      "class": "planes",
+      "confidence": 0.81,
+      "xyxy": [120.5, 80.2, 340.1, 210.0],
+      "in_zone": true
+    }
   ]
 }
 ```
+
+More architecture notes: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ---
 
 ## 🚀 Quick start
 
-### ✅ Recommended: local Inference (Python 3.12)
+### Requirements
+
+| Item | Recommendation |
+| --- | --- |
+| OS | Windows / macOS / Linux |
+| Python | **3.12** for `local` Inference (3.10–3.12 supported; **not 3.13** for `inference`) |
+| API key | [Roboflow](https://roboflow.com/) key in `.env` (needed once to download Universe weights) |
+| Hardware | CPU works; GPU speeds Inference / YOLO |
+
+### ✅ Path A — local Inference (recommended)
 
 ```powershell
-# one-time
+# 1) Create .venv312 + install Inference stack
 .\scripts\setup_local.ps1
-copy .env.example .env    # set ROBOFLOW_API_KEY=
 
+# 2) Secrets
+copy .env.example .env
+# edit .env → ROBOFLOW_API_KEY=...
+
+# 3) Activate + fetch public samples
 .\.venv312\Scripts\Activate.ps1
 python -m skytrace.cli fetch
 python -m skytrace.cli status
 
-# multi-object demos
+# 4) Multi-object demos
 .\scripts\run_local.ps1 -Source data\videos\overhead_apron_montage.mp4 -Model overhead_plane -MaxFrames 0 -Zones
 .\scripts\run_local.ps1 -Source data\videos\drone_quadcopter_hover.webm -Model drone -MaxFrames 0
 .\scripts\run_local.ps1 -Source data\videos\spotting_747_rctp.webm -Model airborne -MaxFrames 150
 
+# 5) Interactive UI
 python app.py
 ```
 
-Weights download **once** (API key authorizes Universe pull). After that, frames run **on your machine** — no per-frame Roboflow detect bill.
+After the first weight download, frames run **on your machine** — no per-frame Roboflow detect charges.
 
-### 🧊 Offline fallback (YOLO-World / no Inference package)
+### 🧊 Path B — offline YOLO-World (no Inference package)
+
+Useful on Python 3.13 or air-gapped machines:
 
 ```powershell
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+
+python -m skytrace.cli fetch
 python -m skytrace.cli track --backend world `
   --source data/videos/drone_quadcopter_hover.webm `
-  --classes "drone,UAV,airplane,helicopter,bird" `
-  --max-frames 90
+  --classes "drone,UAV,airplane,jet,helicopter,bird" `
+  --max-frames 90 --conf 0.15
 ```
+
+Ultralytics checkpoints land in `weights/` (gitignored).
+
+### 🖥️ Gradio UI
+
+```powershell
+python app.py
+```
+
+| Control | Purpose |
+| --- | --- |
+| **Fetch public samples** | Runs the Commons catalog + overhead montage |
+| **Bundled sample** | Pick a local `data/videos/*` file |
+| **Upload** | Bring your own clip |
+| **Backend** | `local` / `world` / `roboflow` / `coco` |
+| **Model alias** | `airborne`, `overhead_plane`, `drone`, … |
+| **Zones checkbox** | Polygon corridor + line counters |
+| **Max frames** | `0` = full video |
 
 ---
 
-## 🧰 CLI cheat sheet
+## 📦 Sample catalog
 
-| Command | What it does |
+Fetched by `python -m skytrace.cli fetch` into `data/videos/` and `data/images/`.
+
+### Airplanes / spotting
+
+| Local file | Kind | Notes |
+| --- | --- | --- |
+| `undershot_a380_yyz.webm` | Under-shot | A380 takeoff (~34s) |
+| `undershot_flight_delhi.webm` | Under-shot | Ground-looking takeoff |
+| `undershot_tejas.webm` | Under-shot | Short carrier takeoff smoke test |
+| `spotting_747_rctp.webm` | Spotting | Longer runway / traffic clip |
+| `overhead_apron_montage.mp4` | Overhead | Built from aerial apron stills |
+
+### Drones *(videos of drones, not filmed by drones)*
+
+| Local file | Notes |
 | --- | --- |
-| `python -m skytrace.cli fetch` | 📥 Download plane + drone Commons assets; build overhead montage |
-| `python -m skytrace.cli list` | 📂 List `data/videos/` |
-| `python -m skytrace.cli status` | 🔑 Key / Inference / aliases |
-| `python -m skytrace.cli track --source PATH [--zones]` | 🏃 Detect → track → annotate → JSON |
-| `python app.py` | 🖥️ Gradio UI |
-| `python scripts/build_gallery.py` | 🖼️ Rebuild README GIFs from `data/outputs/` |
+| `drone_quadcopter_hover.webm` | Hover against sky — primary drone demo |
+| `drone_matrice_fire.webm` | DJI Matrice 300RTK (~12s) |
+| `drone_cobalt_vtol.webm` | VTOL demo clip |
+| `drone_peliscu.webm` | Small outdoor drone clip |
 
-Useful flags: `--backend local|world|coco|roboflow` · `--roboflow-model <alias>` · `--max-frames N` (`≤0` = full) · `--zones` · `--preview`
+Licenses & attribution: [`NOTICE.md`](NOTICE.md).
 
 ---
 
@@ -209,45 +329,151 @@ Useful flags: `--backend local|world|coco|roboflow` · `--roboflow-model <alias>
 
 ### Backends
 
-| Backend | Runs | 💸 Cost model | Best for |
+| Backend | Where it runs | Cost model | Prefer when |
 | --- | --- | --- | --- |
-| **`local`** ★ | GPU/CPU | Key once → free per frame | Dense traffic demos, long clips |
-| **`world`** | Offline | Free | Open-vocab multi-class without Universe |
-| **`coco`** | Offline | Free | Airplane-only smoke test |
-| **`roboflow`** | Cloud | **Credits / frame** | Tiny validation only |
+| **`local`** ★ | Your GPU/CPU via `inference` | API key **once** for weight download → free per frame | Dense traffic / long clips |
+| **`world`** | Offline Ultralytics YOLO-World | Free | Open-vocab multi-class, no Universe model |
+| **`coco`** | Offline YOLOv8n | Free | Airplane-only smoke test |
+| **`roboflow`** | `serverless.roboflow.com` | **Credits per frame** | Short validation only |
 
-### Universe aliases
+### Universe model aliases
 
-| Alias | Role | Typical scene |
+| Alias | Universe model ID | Best for |
 | --- | --- | --- |
-| `airborne` | General airborne OD | Spotting / under-shot jets |
-| `overhead_plane` | Top-down planes | Apron / multi-aircraft overhead |
-| `drone` (= `drone_yolo11`) | Preferred UAV detector | Quads / small drones |
-| `drone_v2` / `drone_large` / `tello` | Alternate UAV models | Ablations / harder clips |
+| `airborne` | `airborne-object-detection/airborne-object-detection-4-aod4/6` | Spotting / under-shot airborne objects |
+| `overhead_plane` | `skybot-cam/overhead-plane-detector/3` | Top-down / apron multi-plane |
+| `drone` / `drone_yolo11` | `godworkspace/drone-detection-dvhol/2` | **Preferred** drone detector |
+| `drone_v2` | `yolodrone/drone-object-detection-v2/1` | Alternate drone OD v2 |
+| `drone_large` | `drone-detection-snemv/drone-detection-wpccn/1` | Large drone dataset (~9.6k images) |
+| `tello` | `alexander437-gzzhf/tello_detect/1` | Tello-oriented clips |
 
-Full IDs + media licenses: [`NOTICE.md`](NOTICE.md).
+Full IDs also accepted (`workspace/project/version`). Paths are normalized to `project/version` for Inference / HTTP.
+
+### YOLO-World default classes
+
+```
+airplane, aircraft, jet, drone, UAV, helicopter, bird
+```
+
+Override with `--classes "drone,UAV,airplane"`.
+
+---
+
+## 🧰 CLI reference
+
+| Command | Description |
+| --- | --- |
+| `python -m skytrace.cli fetch [--force]` | Download Commons samples + build overhead montage |
+| `python -m skytrace.cli list` | List files in `data/videos/` |
+| `python -m skytrace.cli status` | Show API key, Inference availability, aliases |
+| `python -m skytrace.cli track ...` | Full detect → track → annotate → JSON |
+| `python app.py` | Launch Gradio |
+| `python scripts/build_gallery.py` | Rebuild `docs/assets/*.gif` from outputs |
+| `scripts\skytrace312.cmd <args>` | Windows helper into `.venv312` |
+
+### `track` flags
+
+```text
+--source PATH              Input video (default: first local sample)
+--output PATH              Output MP4 (default: data/outputs/<stem>_tracked.mp4)
+--backend local|world|coco|roboflow|auto
+--roboflow-model ALIAS|ID  airborne | overhead_plane | drone | …
+--classes LIST             YOLO-World classes (comma-separated)
+--conf FLOAT               Confidence threshold (default ~0.15)
+--max-frames N             Cap frames; ≤0 means full video
+--zones                    Enable PolygonZone + LineZone overlays
+--preview                  OpenCV preview window (press q to quit)
+```
+
+### PowerShell helper
+
+```powershell
+.\scripts\run_local.ps1 `
+  -Source data\videos\overhead_apron_montage.mp4 `
+  -Model overhead_plane `
+  -MaxFrames 0 `
+  -Conf 0.25 `
+  -Zones
+```
+
+---
+
+## ⚙️ Configuration
+
+| Variable / path | Role |
+| --- | --- |
+| `ROBOFLOW_API_KEY` | Universe weight download (`local`) or cloud detect (`roboflow`) |
+| `.env` | Loaded automatically; **gitignored** |
+| `data/videos/` | Fetched samples (contents gitignored) |
+| `data/outputs/` | Annotated MP4 + events JSON (gitignored) |
+| `weights/` | Ultralytics checkpoints (gitignored; `.gitkeep` kept) |
+| `docs/assets/` | Logo + gallery GIFs (**tracked**) |
+
+Copy `.env.example` → `.env`:
+
+```env
+ROBOFLOW_API_KEY=
+```
 
 ---
 
 ## 🗂️ Repository layout
 
 ```text
-skytrace/
-├── app.py                  # Gradio
-├── skytrace/               # detect · track · zones · samples · CLI
-├── scripts/                # setup_local · run_local · fetch · gallery
-├── tests/                  # fast unit tests (no network)
+skytrace/                         # GitHub repo root
+├── app.py                        # Gradio entrypoint
+├── pyproject.toml                # package name: skytrace
+├── requirements.txt              # core / offline stack
+├── requirements-local.txt        # Inference + Gradio (3.12)
+├── LICENSE · NOTICE.md · README.md
+├── skytrace/                     # Python package
+│   ├── pipeline.py               # detect + ByteTrack + zones + annotate
+│   ├── roboflow_http.py          # cloud HTTP + path normalize
+│   ├── samples.py                # Commons catalog + montage
+│   ├── config.py                 # env, aliases, paths
+│   └── cli.py                    # fetch / track / list / status
+├── scripts/
+│   ├── setup_local.ps1           # create .venv312 + install
+│   ├── run_local.ps1             # one-liner local track
+│   ├── fetch_samples.py
+│   ├── build_gallery.py
+│   └── skytrace312.cmd
+├── tests/                        # pytest (no network)
 ├── docs/
-│   ├── assets/             # logo + multi-object GIFs
+│   ├── assets/                   # logo + multi-object GIFs
 │   ├── ARCHITECTURE.md
 │   ├── GAPS.md
 │   └── design/
-├── data/                   # videos / images / outputs  (gitignored contents)
-├── weights/                # YOLO checkpoints           (gitignored contents)
-└── .github/workflows/ci.yml
+├── data/                         # videos · images · outputs
+├── weights/                      # YOLO / caches
+└── .github/workflows/ci.yml      # pytest on 3.11 / 3.12
 ```
 
-Root stays thin on purpose. Runtime junk (`*.pt`, caches, sample videos, outputs) is gitignored — see `.gitignore`.
+---
+
+## 🛠️ Development
+
+```powershell
+.\.venv312\Scripts\Activate.ps1
+pip install -e ".[dev]"
+pytest -q
+```
+
+CI runs the same unit tests on push/PR (Python 3.11 & 3.12).
+
+---
+
+## 🩺 Troubleshooting
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| `inference` import fails on 3.13 | Unsupported Python | Use `.venv312` / Python 3.10–3.12 |
+| `ROBOFLOW_API_KEY missing` | No `.env` | Copy `.env.example`, set key |
+| 0 tracks on drone clip | Wrong model / conf | Use `--roboflow-model drone`, try `--conf 0.15` |
+| Cloud bill spike | `--backend roboflow` on long video | Switch to `local` |
+| Wikimedia 403 on fetch | Missing User-Agent | Use project `fetch` (sets UA) — don’t curl raw |
+| Huge root `*.pt` files | Ultralytics download cwd | Weights should land in `weights/` (current pipeline) |
+| Empty / tiny output MP4 | Corrupt write / 0 frames | Check `--max-frames`, source path, `status` |
 
 ---
 
@@ -255,31 +481,38 @@ Root stays thin on purpose. Runtime junk (`*.pt`, caches, sample videos, outputs
 
 | Doc | Contents |
 | --- | --- |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Modules, zone math, JSON schema |
-| [`docs/GAPS.md`](docs/GAPS.md) | ADS-B fusion, radar/RF, what we intentionally skip |
-| [`docs/design/…`](docs/design/2026-07-11-air-tracking-demo-design.md) | Original design brief |
-| [`NOTICE.md`](NOTICE.md) | Commons attribution + Universe model IDs |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Modules, data flow, zone policy, JSON schema |
+| [`docs/GAPS.md`](docs/GAPS.md) | ADS-B / radar / multimodal gaps vs production |
+| [`docs/design/2026-07-11-air-tracking-demo-design.md`](docs/design/2026-07-11-air-tracking-demo-design.md) | Original design brief |
+| [`NOTICE.md`](NOTICE.md) | Sample licenses + Universe model IDs |
+| [Supervision docs](https://supervision.roboflow.com/) | Upstream annotators, trackers, zones |
+| [Inference docs](https://inference.roboflow.com/) | On-device / edge deployment |
 
 ---
 
-## 🔐 Security
+## 🔐 Security & cost
 
-- 🗝️ Keep `ROBOFLOW_API_KEY` in `.env` only (never commit)
-- 💸 Prefer `local` so spotting videos don’t melt cloud credits
-- 🔄 Rotate any key that appeared in chat / logs
+- 🗝️ Store `ROBOFLOW_API_KEY` only in `.env` (never commit)
+- 💸 Prefer **`local`** so spotting videos don’t burn per-frame credits
+- 🔄 Rotate any key that was pasted into chat, tickets, or CI logs
+- 📜 Sample media remains under upstream Commons / GODL terms
 
 ---
 
 ## 📄 License
 
-- **Code:** [MIT](LICENSE)
-- **Sample media:** upstream Commons / GODL — [`NOTICE.md`](NOTICE.md)
+| Asset | License |
+| --- | --- |
+| SkyTrace code | [MIT](LICENSE) |
+| Demo media | Upstream Commons / GODL — see [`NOTICE.md`](NOTICE.md) |
+| Model weights | Subject to Ultralytics / Roboflow Universe terms on download |
 
 ---
 
 <p align="center">
-  <sub>
-    SkyTrace · multi-object aerial MOT with <a href="https://supervision.roboflow.com/">Supervision</a><br/>
-    Built for dense traffic, drones, and hard jets — not a single-plane screenshot demo.
-  </sub>
+  <img src="docs/assets/skytrace-logo-256.png" alt="SkyTrace" width="72" /><br/><br/>
+  <b>SkyTrace</b> — multi-object aerial MOT with
+  <a href="https://supervision.roboflow.com/">Supervision</a><br/>
+  <sub>Dense traffic · drones · hard jets — not a single-plane screenshot demo.</sub><br/><br/>
+  <a href="https://github.com/amafjarkasi/skytrace">github.com/amafjarkasi/skytrace</a>
 </p>
