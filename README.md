@@ -28,6 +28,7 @@
 
 <p align="center">
   <a href="#-overview">Overview</a> ·
+  <a href="#-use-cases">Use cases</a> ·
   <a href="#-mission">Mission</a> ·
   <a href="#-features">Features</a> ·
   <a href="#-gallery">Gallery</a> ·
@@ -65,6 +66,252 @@ That one-line pitch — *multi-object airborne tracking for dense airplane traff
 **Stack at a glance:** [Supervision](https://supervision.roboflow.com/) · [Roboflow Inference](https://inference.roboflow.com/) · Ultralytics YOLO-World · Gradio UI · MIT code + Commons samples ([`NOTICE.md`](NOTICE.md)).
 
 > Prefer **`--backend local`** for long clips. Cloud HTTP (`roboflow`) bills **per frame** and is only for short checks.
+
+---
+
+## 🧭 Use cases
+
+Prerequisite for all examples below (once per machine):
+
+```powershell
+.\scripts\setup_local.ps1
+copy .env.example .env   # set ROBOFLOW_API_KEY=
+.\.venv312\Scripts\Activate.ps1
+python -m skytrace.cli fetch
+```
+
+Outputs land in `data/outputs/` as `*_tracked.mp4` + matching `*.events.json`.
+
+---
+
+### 1) 🛫 Dense apron traffic — multi-aircraft overhead
+
+**Who:** airport ops demos, apron situational awareness prototypes, CV teaching labs.  
+**Goal:** keep **several** airframes as separate ByteTrack IDs in a top-down / elevated apron view.  
+**Why this sample:** `overhead_apron_montage.mp4` packs multiple planes into one FOV (true multi-object, not a single close-up).
+
+```powershell
+# PowerShell helper
+.\scripts\run_local.ps1 `
+  -Source data\videos\overhead_apron_montage.mp4 `
+  -Model overhead_plane `
+  -MaxFrames 0 `
+  -Conf 0.25 `
+  -Zones
+
+# Equivalent CLI
+python -m skytrace.cli track `
+  --backend local `
+  --roboflow-model overhead_plane `
+  --source data/videos/overhead_apron_montage.mp4 `
+  --max-frames 0 `
+  --conf 0.25 `
+  --zones `
+  --output data/outputs/usecase_apron_multi.mp4
+```
+
+**Expect:** multiple `planes` class hits, **2–3+ unique tracks**, corridor zone HUD when `--zones` is on.  
+**Read results:** open the MP4; inspect `usecase_apron_multi.events.json` → `unique_tracks`, `class_counts`, `zones`.
+
+---
+
+### 2) ⚡ Hard-to-track jets — spotting / under-shot pass
+
+**Who:** plane-spotting analytics, approach-path demos, MOT stress tests.  
+**Goal:** hold an ID while a jet moves fast, changes scale, or briefly softens against sky.  
+**Why these samples:** under-shot takeoffs + longer RCTP spotting traffic.
+
+```powershell
+# Short under-shot jet (smoke test)
+.\scripts\run_local.ps1 `
+  -Source data\videos\undershot_tejas.webm `
+  -Model airborne `
+  -MaxFrames 0 `
+  -Conf 0.2
+
+# Longer spotting traffic (cap frames to save time)
+python -m skytrace.cli track `
+  --backend local `
+  --roboflow-model airborne `
+  --source data/videos/spotting_747_rctp.webm `
+  --max-frames 150 `
+  --conf 0.2 `
+  --zones `
+  --output data/outputs/usecase_spotting_jets.mp4
+
+# Classic A380 under-shot with zone overlay
+python -m skytrace.cli track `
+  --backend local `
+  --roboflow-model airborne `
+  --source data/videos/undershot_a380_yyz.webm `
+  --max-frames 120 `
+  --zones `
+  --output data/outputs/usecase_a380_zones.mp4
+```
+
+**Expect:** stable `#track_id` labels + motion trails; zone tags when the airframe enters the corridor polygon.  
+**Tip:** if IDs flicker, lower `--conf` slightly (e.g. `0.15`) or keep `--zones` off while tuning detection first.
+
+---
+
+### 3) 🛸 Drone / small-UAV tracking
+
+**Who:** UAS awareness demos, counter-UAS *research* prototypes (EO-only), hobbyist CV.  
+**Goal:** detect and track small drones that are easy to miss with airplane-only models.  
+**Why these samples:** Commons clips **of** drones (hover / Matrice / VTOL) — not FPV filmed by drones.
+
+```powershell
+# Primary drone demo (verified multi-track on hover clip)
+.\scripts\run_local.ps1 `
+  -Source data\videos\drone_quadcopter_hover.webm `
+  -Model drone `
+  -MaxFrames 0 `
+  -Conf 0.15
+
+python -m skytrace.cli track `
+  --backend local `
+  --roboflow-model drone `
+  --source data/videos/drone_quadcopter_hover.webm `
+  --max-frames 0 `
+  --conf 0.15 `
+  --output data/outputs/usecase_drone_hover.mp4
+
+# Alternate hardware / viewpoints
+python -m skytrace.cli track --backend local --roboflow-model drone `
+  --source data/videos/drone_matrice_fire.webm --max-frames 0 --conf 0.15
+python -m skytrace.cli track --backend local --roboflow-model tello `
+  --source data/videos/drone_peliscu.webm --max-frames 0 --conf 0.15
+python -m skytrace.cli track --backend local --roboflow-model drone_large `
+  --source data/videos/drone_cobalt_vtol.webm --max-frames 0 --conf 0.15
+```
+
+**Expect:** `drone` class hits and **≥1–2 unique tracks** on the hover clip with the preferred `drone` alias.  
+**Fallback (no Inference):** YOLO-World open-vocab:
+
+```powershell
+python -m skytrace.cli track `
+  --backend world `
+  --source data/videos/drone_quadcopter_hover.webm `
+  --classes "drone,UAV,quadcopter,aircraft" `
+  --max-frames 90 `
+  --conf 0.1
+```
+
+---
+
+### 4) 🛰️ Mixed airspace — planes + helicopters + drones in one pass
+
+**Who:** “what’s in this sky clip?” explorers, open-vocab experiments.  
+**Goal:** surface multiple airborne classes without committing to a single Universe model.  
+**Approach:** YOLO-World (`--backend world`) with an airborne class list, or `airborne` on busy spotting video.
+
+```powershell
+# Open-vocab mixed classes (offline-friendly)
+python -m skytrace.cli track `
+  --backend world `
+  --source data/videos/spotting_747_rctp.webm `
+  --classes "airplane,jet,helicopter,drone,UAV,bird" `
+  --max-frames 120 `
+  --conf 0.15 `
+  --output data/outputs/usecase_mixed_world.mp4
+
+# Universe airborne model on the same spotting clip
+python -m skytrace.cli track `
+  --backend local `
+  --roboflow-model airborne `
+  --source data/videos/spotting_747_rctp.webm `
+  --max-frames 150 `
+  --output data/outputs/usecase_mixed_airborne.mp4
+```
+
+**Expect:** `class_counts` spanning more than one label when the clip supports it; use events JSON to histogram classes over time.
+
+---
+
+### 5) 📐 Airspace corridor / line-crossing analytics
+
+**Who:** demos of Supervision zones for “did anything enter this lane?” storytelling.  
+**Goal:** overlay a relative **PolygonZone** corridor + mid-frame **LineZone**, count occupancy / crossings, tag events with `in_zone`.
+
+```powershell
+python -m skytrace.cli track `
+  --backend local `
+  --roboflow-model overhead_plane `
+  --source data/videos/overhead_apron_montage.mp4 `
+  --max-frames 0 `
+  --zones `
+  --output data/outputs/usecase_zones_apron.mp4
+
+# Same idea on under-shot traffic
+.\scripts\run_local.ps1 `
+  -Source data\videos\undershot_a380_yyz.webm `
+  -Model airborne `
+  -MaxFrames 120 `
+  -Zones
+```
+
+**Expect:** HUD shows `zone:…` and `line:in/out`; each event may include `"in_zone": true|false`.  
+**Downstream:** sum `in_zone` in the JSON, or chart `zones.line_in` / `zones.line_out` across clips.
+
+---
+
+### 6) 🖥️ Interactive review — Gradio operator console
+
+**Who:** stakeholders who won’t touch a terminal; quick A/B of models.  
+**Goal:** fetch samples, switch backend/alias, toggle zones, preview annotated video.
+
+```powershell
+.\.venv312\Scripts\Activate.ps1
+python app.py
+# open the local Gradio URL → Fetch public samples → pick clip → Run tracking
+```
+
+| UI control | Maps to |
+| --- | --- |
+| Backend dropdown | `--backend` |
+| Model alias | `--roboflow-model` |
+| Zones checkbox | `--zones` |
+| Max frames `0` | full video |
+
+---
+
+### 7) 📊 Batch export for notebooks / dashboards
+
+**Who:** analysts building heatmaps, track-length histograms, or class timelines.  
+**Goal:** produce machine-readable events without babysitting the preview window.
+
+```powershell
+$clips = @(
+  @{ src = "data/videos/overhead_apron_montage.mp4"; model = "overhead_plane"; out = "batch_apron.mp4" },
+  @{ src = "data/videos/drone_quadcopter_hover.webm"; model = "drone"; out = "batch_drone.mp4" },
+  @{ src = "data/videos/spotting_747_rctp.webm"; model = "airborne"; out = "batch_spotting.mp4" }
+)
+
+foreach ($c in $clips) {
+  python -m skytrace.cli track `
+    --backend local `
+    --roboflow-model $c.model `
+    --source $c.src `
+    --max-frames 90 `
+    --output ("data/outputs/" + $c.out)
+}
+```
+
+Then load `data/outputs/*.events.json` in Python/pandas and group by `track_id` / `class`.
+
+---
+
+### Use-case cheat sheet
+
+| # | Use case | Sample | Model | Key flags |
+| --- | --- | --- | --- | --- |
+| 1 | Dense apron multi-plane | `overhead_apron_montage.mp4` | `overhead_plane` | `--zones` |
+| 2 | Hard jets / spotting | `spotting_747_rctp.webm`, `undershot_*` | `airborne` | `--max-frames`, `--zones` |
+| 3 | Drone tracking | `drone_quadcopter_hover.webm` | `drone` | `--conf 0.15` |
+| 4 | Mixed airspace | spotting or world classes | `airborne` / `world` | `--classes …` |
+| 5 | Corridor analytics | apron or A380 | matching alias | `--zones` |
+| 6 | Stakeholder UI | any | any | `python app.py` |
+| 7 | Batch JSON export | several | per-clip alias | `--output` |
 
 ---
 
