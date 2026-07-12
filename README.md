@@ -477,8 +477,10 @@ flowchart TB
 ```json
 {
   "source": "data/videos/overhead_apron_montage.mp4",
+  "output": "data/outputs/overhead_apron_montage_tracked.mp4",
   "model": "local:overhead-plane-detector/3",
   "backend": "local",
+  "classes": ["airplane", "aircraft", "jet", "drone", "UAV", "helicopter", "bird"],
   "frames_processed": 90,
   "unique_tracks": 3,
   "class_counts": { "planes": 216 },
@@ -500,6 +502,16 @@ flowchart TB
   ]
 }
 ```
+
+**Annotation / HUD details (from `pipeline.py`):**
+
+| Element | Behavior |
+| --- | --- |
+| Labels | `#{track_id} {class} {conf}` plus ` [zone]` when inside the polygon |
+| Trace | Supervision `TraceAnnotator` (`trace_length=40`) |
+| HUD | `tracks`, `frame_dets`, `model`; with `--zones` also `zone:` hits and `line:in/out` |
+| Zones geometry | Corridor polygon ~15–85% width × 20–90% height; horizontal LineZone at ~55% frame height |
+| Tracker | Prefer `trackers.ByteTrackTracker` (activation 0.25, lost buffer 45, …); else `sv.ByteTrack` |
 
 More architecture notes: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
@@ -568,66 +580,92 @@ python app.py
 
 | Control | Purpose |
 | --- | --- |
-| **Fetch public samples** | Runs the Commons catalog + overhead montage |
+| **Fetch public samples** | Runs Commons catalog + overhead montage |
+| **Fetch status** | Text log of what was downloaded / built |
 | **Bundled sample** | Pick a local `data/videos/*` file |
-| **Upload** | Bring your own clip |
-| **Backend** | `local` / `world` / `roboflow` / `coco` |
-| **Model alias** | `airborne`, `overhead_plane`, `drone`, … |
+| **Upload** | Bring your own clip — **overrides** the bundled dropdown when set |
+| **Backend** | `local` / `world` / `roboflow` / `coco` (no `auto` in UI) |
+| **Model alias** | Dropdown of aliases; **custom Universe IDs allowed** |
+| **Classes** | YOLO-World class list (ignored for Inference backends) |
+| **Confidence** | Slider **0.05–0.8**, UI default **0.25** (CLI/config default is **0.15**) |
+| **Max frames** | Default **90**; `0` = full video |
 | **Zones checkbox** | Polygon corridor + line counters |
-| **Max frames** | `0` = full video |
+| **Run tracking** | Executes pipeline |
+| **Annotated output** | Plays result MP4 |
+| **Summary** | Model, frames, tracks, class hits, zone stats, events path |
+
+UI limits vs CLI: no OpenCV `--preview`, no custom `--output` path (writes under `data/outputs/`).
 
 ---
 
 ## 📦 Sample catalog
 
-Fetched by `python -m skytrace.cli fetch` into `data/videos/` and `data/images/`.
+Fetched by `python -m skytrace.cli fetch` into `data/videos/` and `data/images/`.  
+Also writes `data/videos/manifest.json` (catalog metadata). Supported input globs: `*.mp4`, `*.webm`, `*.avi`, `*.mov`, `*.mkv`.
 
 ### Airplanes / spotting
 
-| Local file | Kind | Notes |
-| --- | --- | --- |
-| `undershot_a380_yyz.webm` | Under-shot | A380 takeoff (~34s) |
-| `undershot_flight_delhi.webm` | Under-shot | Ground-looking takeoff |
-| `undershot_tejas.webm` | Under-shot | Short carrier takeoff smoke test |
-| `spotting_747_rctp.webm` | Spotting | Longer runway / traffic clip |
-| `overhead_apron_montage.mp4` | Overhead | Built from aerial apron stills |
+| Local file | Sample id | Kind | Notes |
+| --- | --- | --- | --- |
+| `undershot_a380_yyz.webm` | `undershot_a380_yyz` | Under-shot | A380 takeoff (~34s) |
+| `undershot_flight_delhi.webm` | `undershot_flight_delhi` | Under-shot | Ground-looking takeoff |
+| `undershot_tejas.webm` | `undershot_tejas` | Under-shot | Short carrier takeoff smoke test |
+| `spotting_747_rctp.webm` | `spotting_747_rctp` | Spotting | Longer runway / traffic clip |
+| `overhead_apron_montage.mp4` | *(built)* | Overhead | Stitched from stills below (~3 s/image, 10 fps, ≤1280 px wide) |
+
+### Overhead stills → montage
+
+| Local file (`data/images/`) | Notes |
+| --- | --- |
+| `overhead_farnborough.jpg` | Aerial apron / tower (CC BY-SA) |
+| `overhead_tansonnhat.jpg` | Elevated airport with multiple aircraft |
+| `overhead_lappeenranta.jpg` | Apron overview |
 
 ### Drones *(videos of drones, not filmed by drones)*
 
-| Local file | Notes |
-| --- | --- |
-| `drone_quadcopter_hover.webm` | Hover against sky — primary drone demo |
-| `drone_matrice_fire.webm` | DJI Matrice 300RTK (~12s) |
-| `drone_cobalt_vtol.webm` | VTOL demo clip |
-| `drone_peliscu.webm` | Small outdoor drone clip |
+| Local file | Sample id | Notes |
+| --- | --- | --- |
+| `drone_quadcopter_hover.webm` | `drone_quadcopter_hover` | Hover against sky — primary drone demo |
+| `drone_matrice_fire.webm` | `drone_matrice_fire` | DJI Matrice 300RTK (~12s) |
+| `drone_cobalt_vtol.webm` | `drone_cobalt_vtol` | VTOL demo clip |
+| `drone_peliscu.webm` | `drone_peliscu` | Small outdoor drone clip |
 
-Licenses & attribution: [`NOTICE.md`](NOTICE.md).
+Licenses & attribution: [`NOTICE.md`](NOTICE.md). Re-download with `python -m skytrace.cli fetch --force`.
 
 ---
 
 ## 🛰️ Models & backends
 
-### Backends
+### Backend selection
 
 | Backend | Where it runs | Cost model | Prefer when |
 | --- | --- | --- | --- |
 | **`local`** ★ | Your GPU/CPU via `inference` | API key **once** for weight download → free per frame | Dense traffic / long clips |
 | **`world`** | Offline Ultralytics YOLO-World | Free | Open-vocab multi-class, no Universe model |
-| **`coco`** | Offline YOLOv8n | Free | Airplane-only smoke test |
+| **`coco`** | Offline YOLOv8n | Free | Airplane-only smoke test (filters COCO class id **4**) |
 | **`roboflow`** | `serverless.roboflow.com` | **Credits per frame** | Short validation only |
+| **`auto`** | CLI only | — | Try YOLO-World; if that fails, fall back to COCO airplane |
+
+**Default backend** (when you omit `--backend`):
+
+1. `local` if `inference` is importable **and** `ROBOFLOW_API_KEY` is set  
+2. else `roboflow` if only the API key is set (cloud — careful)  
+3. else `world`
+
+`python -m skytrace.cli status` prints the resolved default. Gradio has no `auto` option.
 
 ### Universe model aliases
 
 | Alias | Universe model ID | Best for |
 | --- | --- | --- |
-| `airborne` | `airborne-object-detection/airborne-object-detection-4-aod4/6` | Spotting / under-shot airborne objects |
+| `airborne` ★ default | `airborne-object-detection/airborne-object-detection-4-aod4/6` | Spotting / under-shot airborne objects |
 | `overhead_plane` | `skybot-cam/overhead-plane-detector/3` | Top-down / apron multi-plane |
 | `drone` / `drone_yolo11` | `godworkspace/drone-detection-dvhol/2` | **Preferred** drone detector |
 | `drone_v2` | `yolodrone/drone-object-detection-v2/1` | Alternate drone OD v2 |
 | `drone_large` | `drone-detection-snemv/drone-detection-wpccn/1` | Large drone dataset (~9.6k images) |
 | `tello` | `alexander437-gzzhf/tello_detect/1` | Tello-oriented clips |
 
-Full IDs also accepted (`workspace/project/version`). Paths are normalized to `project/version` for Inference / HTTP.
+Full IDs also accepted (`workspace/project/version`). Paths are normalized to `project/version` for Inference / HTTP (`normalize_detect_path`).
 
 ### YOLO-World default classes
 
@@ -635,7 +673,16 @@ Full IDs also accepted (`workspace/project/version`). Paths are normalized to `p
 airplane, aircraft, jet, drone, UAV, helicopter, bird
 ```
 
-Override with `--classes "drone,UAV,airplane"`.
+Override with `--classes "drone,UAV,airplane"` (CLI) or the Gradio **Classes** box.
+
+### Config defaults (`skytrace/config.py`)
+
+| Constant | Value |
+| --- | --- |
+| `CONFIDENCE` | `0.15` (CLI default; Gradio slider starts at `0.25`) |
+| `IOU` | `0.5` (Ultralytics predict) |
+| `DEFAULT_ROBOFLOW_MODEL` | `airborne` |
+| `WEIGHTS_DIR` | `weights/` (YOLO / YOLO-World checkpoints) |
 
 ---
 
@@ -643,38 +690,66 @@ Override with `--classes "drone,UAV,airplane"`.
 
 | Command | Description |
 | --- | --- |
-| `python -m skytrace.cli fetch [--force]` | Download Commons samples + build overhead montage |
+| `python -m skytrace.cli fetch [--force]` | Download Commons samples + build overhead montage + `manifest.json` |
 | `python -m skytrace.cli list` | List files in `data/videos/` |
-| `python -m skytrace.cli status` | Show API key, Inference availability, aliases |
+| `python -m skytrace.cli status` | Show API key, Inference availability, default backend, aliases |
 | `python -m skytrace.cli track ...` | Full detect → track → annotate → JSON |
+| `skytrace <subcommand>` | Same CLI after `pip install -e ".[local]"` (`pyproject` entry point) |
 | `python app.py` | Launch Gradio |
-| `python scripts/build_gallery.py` | Rebuild `docs/assets/*.gif` from outputs |
+| `python scripts/fetch_samples.py` | Thin wrapper around `ensure_all_samples()` |
+| `python scripts/build_gallery.py [--outputs DIR] [--dest DIR]` | Rebuild `docs/assets/*.gif` from tracked MP4s |
 | `scripts\skytrace312.cmd <args>` | Windows helper into `.venv312` |
 
 ### `track` flags
 
 ```text
---source PATH              Input video (default: first local sample)
+--source PATH              Input video (default: first file found in data/videos/)
 --output PATH              Output MP4 (default: data/outputs/<stem>_tracked.mp4)
 --backend local|world|coco|roboflow|auto
---roboflow-model ALIAS|ID  airborne | overhead_plane | drone | …
---classes LIST             YOLO-World classes (comma-separated)
---conf FLOAT               Confidence threshold (default ~0.15)
---max-frames N             Cap frames; ≤0 means full video
---zones                    Enable PolygonZone + LineZone overlays
---preview                  OpenCV preview window (press q to quit)
+--roboflow-model ALIAS|ID  default: airborne
+--classes LIST             YOLO-World only (comma-separated)
+--conf FLOAT               default 0.15 (pipeline CONFIDENCE)
+--max-frames N             Cap frames; omit / ≤0 = full video
+--zones                    PolygonZone corridor + LineZone overlays
+--preview                  OpenCV window (~960×540); press q to quit
 ```
 
-### PowerShell helper
+Omit `--source` to track whatever `list` would show first:
+
+```powershell
+python -m skytrace.cli track --backend local --roboflow-model airborne --max-frames 60
+```
+
+### PowerShell helper (`scripts/run_local.ps1`)
 
 ```powershell
 .\scripts\run_local.ps1 `
   -Source data\videos\overhead_apron_montage.mp4 `
   -Model overhead_plane `
+  -Backend local `
   -MaxFrames 0 `
   -Conf 0.25 `
   -Zones
 ```
+
+| Param | Maps to |
+| --- | --- |
+| `-Source` | `--source` |
+| `-Model` | `--roboflow-model` |
+| `-Backend` | `--backend` (default `local`) |
+| `-MaxFrames` | `--max-frames` |
+| `-Conf` | `--conf` |
+| `-Zones` | `--zones` |
+
+### Gallery builder
+
+```powershell
+# Needs prior tracked MP4s under data/outputs/ (see scripts/build_gallery.py GALLERY list)
+python scripts/build_gallery.py
+python scripts/build_gallery.py --outputs data/outputs --dest docs/assets
+```
+
+Preferred sources include `gallery_overhead_multi.mp4`, `gallery_drone.mp4`, `gallery_traffic.mp4`. If GIF encoding fails, a PNG still is written instead.
 
 ---
 
@@ -684,7 +759,9 @@ Override with `--classes "drone,UAV,airplane"`.
 | --- | --- |
 | `ROBOFLOW_API_KEY` | Universe weight download (`local`) or cloud detect (`roboflow`) |
 | `.env` | Loaded automatically; **gitignored** |
-| `data/videos/` | Fetched samples (contents gitignored) |
+| Default backend | See [Backend selection](#backend-selection) (`status` prints it) |
+| `data/videos/` | Fetched samples + `manifest.json` (contents gitignored except keep) |
+| `data/images/` | Overhead stills used to build the apron montage |
 | `data/outputs/` | Annotated MP4 + events JSON (gitignored) |
 | `weights/` | Ultralytics checkpoints (gitignored; `.gitkeep` kept) |
 | `docs/assets/` | Logo + gallery GIFs (**tracked**) |
@@ -735,11 +812,14 @@ skytrace/                         # GitHub repo root
 
 ```powershell
 .\.venv312\Scripts\Activate.ps1
-pip install -e ".[dev]"
+pip install -e ".[dev]"          # pytest
+# Optional extras from pyproject.toml:
+#   pip install -e ".[local]"    # inference + trackers + gradio + imageio
+#   pip install -e ".[ui]"       # gradio only
 pytest -q
 ```
 
-CI runs the same unit tests on push/PR (Python 3.11 & 3.12).
+CI runs unit tests on push/PR (Python 3.11 & 3.12). Covered today: `normalize_detect_path` + drone alias wiring (`tests/test_normalize.py`).
 
 ---
 
