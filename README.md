@@ -77,7 +77,7 @@ The goal is not “find one airplane.” The goal is to keep **many airborne obj
 
 ## ✨ Features
 
-<table>
+<table cellpadding="12" cellspacing="0">
 <tr>
 <td width="50%" valign="top">
 
@@ -89,6 +89,8 @@ The goal is not “find one airplane.” The goal is to keep **many airborne obj
 - 📐 Optional **PolygonZone** corridor + **LineZone** counters
 - 📦 Annotated **MP4** + structured **`*.events.json`**
 
+<br/><br/>
+
 </td>
 <td width="50%" valign="top">
 
@@ -99,6 +101,8 @@ The goal is not “find one airplane.” The goal is to keep **many airborne obj
 - 🧪 Unit-tested model path helpers + GitHub Actions CI
 - 🖼️ README gallery builder (`scripts/build_gallery.py`)
 - 📜 Clear attribution in [`NOTICE.md`](NOTICE.md)
+
+<br/><br/>
 
 </td>
 </tr>
@@ -117,6 +121,8 @@ The goal is not “find one airplane.” The goal is to keep **many airborne obj
 | Public sample fetch | ✅ | Planes + drones + overhead montage |
 | ADS-B / radar fusion | ❌ | Out of scope (documented gap) |
 | Multi-camera re-ID | ❌ | Out of scope |
+
+<br/>
 
 ---
 
