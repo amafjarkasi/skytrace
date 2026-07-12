@@ -10,6 +10,13 @@
 </p>
 
 <p align="center">
+  SkyTrace is a <a href="https://supervision.roboflow.com/">Supervision</a>-powered demo that keeps <b>many airborne objects</b> identified across video —
+  crowded aprons, fast jets that change scale in seconds, and small drones that barely register as a few pixels.
+  It runs detect → <b>ByteTrack</b> → annotate → export so you get stable track IDs, motion trails, optional airspace zones,
+  and a per-frame events log — using public CC samples or your own footage, with local Inference preferred so long clips don’t burn cloud credits.
+</p>
+
+<p align="center">
   Detect → <b>ByteTrack</b> → annotate → export<br/>
   <a href="https://supervision.roboflow.com/">Roboflow Supervision</a>
   · local <a href="https://inference.roboflow.com/">Inference</a>
