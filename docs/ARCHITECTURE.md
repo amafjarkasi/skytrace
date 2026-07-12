@@ -10,7 +10,7 @@
 
 | Module | Responsibility |
 | --- | --- |
-| `skytrace/config.py` | Paths, defaults, `.env`, model aliases, Inference availability |
+| `skytrace/config.py` | Paths (`data/`, `weights/`), `.env`, model aliases, Inference availability |
 | `skytrace/pipeline.py` | `AirborneDetector`, ByteTrack, zones, annotators, `process_video` |
 | `skytrace/roboflow_http.py` | Cloud detect HTTP + `normalize_detect_path` |
 | `skytrace/samples.py` | Catalog, download (User-Agent), apron montage |
@@ -37,11 +37,12 @@ source video
 
 ## Config & env
 
-| Variable | Role |
+| Variable / path | Role |
 | --- | --- |
 | `ROBOFLOW_API_KEY` | Universe weight download (local) or cloud detect |
 | `DEFAULT_BACKEND` | Often `local` when Inference is importable |
-| Model aliases | `airborne`, `overhead_plane`, `drone`, `drone_yolo11`, `drone_large`, `tello` |
+| `weights/` | Ultralytics YOLO / YOLO-World checkpoints (gitignored) |
+| Model aliases | `airborne`, `overhead_plane`, `drone`, `drone_v2`, `drone_large`, `tello` |
 
 Model IDs for Inference/HTTP are normalized to `project/version` (workspace prefix stripped).
 

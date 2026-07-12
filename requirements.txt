@@ -11,5 +11,5 @@ regex>=2023.0.0
 python-dotenv>=1.0.0
 roboflow>=1.1.0
 # Note: Roboflow `inference` / `inference-sdk` require Python <3.13.
-# This project uses airtrack/roboflow_http.py against serverless.roboflow.com.
+# This project uses skytrace/roboflow_http.py against serverless.roboflow.com.
 clip @ git+https://github.com/ultralytics/CLIP.git

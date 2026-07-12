@@ -3,9 +3,14 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
 import cv2
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from skytrace.config import DOCS_ASSETS_DIR, OUTPUTS_DIR
 
@@ -47,7 +52,6 @@ def video_to_gif(
 
         imageio.mimsave(dest, frames, duration=0.12, loop=0)
     except Exception:
-        # Fallback: write a representative PNG still
         still = dest.with_suffix(".png")
         bgr = cv2.cvtColor(frames[len(frames) // 2], cv2.COLOR_RGB2BGR)
         cv2.imwrite(str(still), bgr)
@@ -74,12 +78,18 @@ def write_still(source: Path, dest: Path, frame_index: int = 10) -> Path | None:
     return dest
 
 
+# Prefer multi-object overhead / drone / traffic; avoid leading with single close-up A380.
 GALLERY = [
-    ("demo_undershot_a380_local.mp4", "undershot_a380.gif", "undershot_a380.png"),
-    ("demo_overhead_local.mp4", "overhead_apron.gif", "overhead_apron.png"),
-    ("undershot_tejas_tracked.mp4", "undershot_tejas.gif", "undershot_tejas.png"),
+    ("gallery_overhead_multi.mp4", "multi_overhead.gif", "multi_overhead.png"),
+    ("gallery_drone.mp4", "multi_drone.gif", "multi_drone.png"),
+    ("gallery_traffic.mp4", "multi_traffic.gif", "multi_traffic.png"),
+    # Optional fallbacks / extras
     ("demo_drone_quad.mp4", "demo_drone_quad.gif", "demo_drone_quad.png"),
+    ("demo_overhead_local.mp4", "overhead_apron.gif", "overhead_apron.png"),
+    ("gallery_delhi.mp4", "multi_delhi.gif", "multi_delhi.png"),
     ("demo_a380_zones.mp4", "demo_a380_zones.gif", "demo_a380_zones.png"),
+    ("demo_undershot_a380_local.mp4", "undershot_a380.gif", "undershot_a380.png"),
+    ("undershot_tejas_tracked.mp4", "undershot_tejas.gif", "undershot_tejas.png"),
 ]
 
 

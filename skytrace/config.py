@@ -12,7 +12,10 @@ DATA_DIR = ROOT / "data"
 VIDEOS_DIR = DATA_DIR / "videos"
 IMAGES_DIR = DATA_DIR / "images"
 OUTPUTS_DIR = DATA_DIR / "outputs"
+WEIGHTS_DIR = ROOT / "weights"
 DOCS_ASSETS_DIR = ROOT / "docs" / "assets"
+
+WEIGHTS_DIR.mkdir(parents=True, exist_ok=True)
 
 ROBOFLOW_API_KEY = os.getenv("ROBOFLOW_API_KEY", "").strip()
 

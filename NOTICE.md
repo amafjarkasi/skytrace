@@ -34,9 +34,11 @@ This project downloads public media for demos. Licenses remain with upstream aut
 | --- | --- | --- |
 | `airborne` | `airborne-object-detection/airborne-object-detection-4-aod4/6` | General airborne objects |
 | `overhead_plane` | `skybot-cam/overhead-plane-detector/3` | Top-down / apron planes |
-| `drone` | `yolodrone/drone-object-detection-v2/1` | Drone OD v2 (YOLOv8s, mAP~74%) |
-| `drone_yolo11` | `godworkspace/drone-detection-dvhol/2` | Newer YOLOv11 drone detector |
+| `drone` / `drone_yolo11` | `godworkspace/drone-detection-dvhol/2` | Preferred drone detector (verified on hover clip) |
+| `drone_v2` | `yolodrone/drone-object-detection-v2/1` | Earlier drone OD v2 |
 | `drone_large` | `drone-detection-snemv/drone-detection-wpccn/1` | Large drone dataset (~9.6k images) |
 | `tello` | `alexander437-gzzhf/tello_detect/1` | Tello-oriented drone detector |
+
+Offline Ultralytics weights download into `weights/` (gitignored). Roboflow Inference caches Universe weights on first local run.
 
 Models (Ultralytics YOLO / YOLO-World / Roboflow Inference weights) are subject to their own licenses when downloaded on first run.

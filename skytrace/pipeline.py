@@ -29,6 +29,7 @@ from skytrace.config import (
     OUTPUTS_DIR,
     ROBOFLOW_API_KEY,
     ROBOFLOW_MODELS,
+    WEIGHTS_DIR,
 )
 
 
@@ -153,11 +154,14 @@ class AirborneDetector:
             self._mode = "roboflow"
             return model
 
+        world_weights = str(WEIGHTS_DIR / "yolov8s-worldv2.pt")
+        coco_weights = str(WEIGHTS_DIR / "yolov8n.pt")
+
         if self.backend in {"world", "yolo-world", "auto"}:
             try:
                 from ultralytics import YOLOWorld
 
-                model = YOLOWorld("yolov8s-worldv2.pt")
+                model = YOLOWorld(world_weights)
                 model.set_classes(self.classes)
                 self.model_name = "yolov8s-worldv2.pt"
                 self._mode = "world"
@@ -166,7 +170,7 @@ class AirborneDetector:
                 try:
                     from ultralytics import YOLO
 
-                    model = YOLO("yolov8s-worldv2.pt")
+                    model = YOLO(world_weights)
                     if hasattr(model, "set_classes"):
                         model.set_classes(self.classes)
                     self.model_name = "yolov8s-worldv2.pt"
@@ -178,7 +182,7 @@ class AirborneDetector:
 
         from ultralytics import YOLO
 
-        model = YOLO("yolov8n.pt")
+        model = YOLO(coco_weights)
         self.model_name = "yolov8n.pt (COCO airplane fallback)"
         self._mode = "coco"
         return model
